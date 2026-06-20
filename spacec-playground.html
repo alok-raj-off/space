@@ -1,0 +1,1069 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SPACEC — Playground</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #FAFAF7;
+    --surface: #FFFFFF;
+    --ink: #14171F;
+    --ink-soft: #5B616E;
+    --ink-faint: #9498A1;
+    --line: #E3E2DC;
+    --line-soft: #ECEBE5;
+    --orange: #FF5A36;
+    --orange-dim: #FFE6DF;
+    --blue: #2452FF;
+    --blue-dim: #E7ECFF;
+    --green: #1FAE6B;
+    --green-dim: #DFF5EA;
+    --amber: #B8860B;
+    --console-bg: #0E1320;
+    --console-line: #232A3D;
+    --radius: 10px;
+    --font-display: 'Space Grotesk', sans-serif;
+    --font-body: 'Inter', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+  }
+
+  *{ box-sizing: border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background: var(--bg);
+    background-image:
+      linear-gradient(var(--line-soft) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line-soft) 1px, transparent 1px);
+    background-size: 28px 28px;
+    color: var(--ink);
+    font-family: var(--font-body);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::selection{ background: var(--orange-dim); color: var(--ink); }
+
+  a{ color: var(--blue); }
+
+  button{
+    font-family: var(--font-display);
+    cursor: pointer;
+  }
+  button:focus-visible, select:focus-visible, textarea:focus-visible{
+    outline: 2px solid var(--blue);
+    outline-offset: 2px;
+  }
+
+  .shell{
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 22px 22px 60px;
+  }
+
+  /* ---------- Header ---------- */
+  .topbar{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 22px;
+  }
+
+  .brand{
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+  .brand .mark{
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 26px;
+    letter-spacing: -0.01em;
+  }
+  .brand .mark span{ color: var(--orange); }
+  .brand .tagline{
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    letter-spacing: 0.02em;
+  }
+
+  .controls{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  select.examples{
+    font-family: var(--font-body);
+    font-size: 13px;
+    color: var(--ink);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 9px 12px;
+  }
+
+  .btn{
+    border-radius: 8px;
+    border: 1px solid transparent;
+    font-size: 13.5px;
+    font-weight: 600;
+    padding: 9px 16px;
+    letter-spacing: 0.01em;
+    transition: transform 0.08s ease, box-shadow 0.15s ease, background 0.15s ease;
+  }
+  .btn-run{
+    background: var(--ink);
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .btn-run:hover{ background: #272B36; }
+  .btn-run:active{ transform: translateY(1px); }
+  .btn-run .key{
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: rgba(255,255,255,0.55);
+    border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 4px;
+    padding: 1px 5px;
+  }
+  .btn-ghost{
+    background: var(--surface);
+    border: 1px solid var(--line);
+    color: var(--ink-soft);
+  }
+  .btn-ghost:hover{ color: var(--ink); border-color: var(--ink-faint); }
+
+  /* ---------- Stepper (signature element: flight plan) ---------- */
+  .stepper{
+    display: flex;
+    align-items: center;
+    margin-bottom: 22px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .stepper::-webkit-scrollbar{ display:none; }
+
+  .step{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: none;
+  }
+  .step .dot{
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    background: var(--surface);
+    border: 2px solid var(--line);
+    transition: all 0.25s ease;
+    flex: none;
+  }
+  .step .label{
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    letter-spacing: 0.06em;
+    color: var(--ink-faint);
+    white-space: nowrap;
+    transition: color 0.25s ease;
+  }
+  .step.active .dot{ border-color: var(--orange); background: var(--orange); box-shadow: 0 0 0 4px var(--orange-dim); }
+  .step.active .label{ color: var(--ink); }
+  .step.done .dot{ border-color: var(--green); background: var(--green); }
+  .step.done .label{ color: var(--green); }
+  .step.error .dot{ border-color: #D33A2C; background: #D33A2C; }
+  .step.error .label{ color: #D33A2C; }
+
+  .track{
+    flex: 1 1 36px;
+    min-width: 24px;
+    height: 0;
+    border-top: 2px dotted var(--line);
+    margin: 0 10px;
+    position: relative;
+    top: -1px;
+  }
+  .track.filled{ border-top-color: var(--green); }
+
+  /* ---------- Workspace ---------- */
+  .workspace{
+    display: grid;
+    grid-template-columns: 1.05fr 0.95fr;
+    gap: 18px;
+    align-items: stretch;
+  }
+
+  .panel{
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 1px 0 rgba(20,23,31,0.02);
+  }
+
+  .panel-head{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 11px 14px;
+    border-bottom: 1px solid var(--line);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    color: var(--ink-soft);
+    background: linear-gradient(180deg, #FCFCFA, #F7F7F4);
+  }
+  .panel-head .dots{ display:flex; gap:6px; }
+  .panel-head .dots span{ width:7px; height:7px; border-radius:50%; background: var(--line); }
+
+  .panel-head .pill{
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: var(--ink-soft);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 3px 9px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .panel-head .pill:hover{ border-color: var(--ink-faint); color: var(--ink); }
+  .panel-head .pill.on{ background: var(--blue-dim); border-color: var(--blue); color: var(--blue); }
+
+  /* editor */
+  .editor-wrap{
+    display: flex;
+    flex: 1;
+    min-height: 360px;
+  }
+  .gutter{
+    font-family: var(--font-mono);
+    font-size: 13px;
+    line-height: 21px;
+    color: var(--ink-faint);
+    text-align: right;
+    padding: 16px 10px 16px 14px;
+    background: #FCFCFA;
+    border-right: 1px solid var(--line-soft);
+    user-select: none;
+    overflow: hidden;
+    white-space: pre;
+  }
+  textarea#editor{
+    flex: 1;
+    border: none;
+    resize: none;
+    padding: 16px 16px 16px 12px;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    line-height: 21px;
+    color: var(--ink);
+    background: transparent;
+    outline: none;
+    tab-size: 4;
+  }
+
+  /* console */
+  .terminal{
+    flex: 1;
+    background: var(--console-bg);
+    color: #D9E4F5;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    line-height: 21px;
+    padding: 16px;
+    overflow-y: auto;
+    min-height: 360px;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .terminal .ln{ display:flex; gap:8px; }
+  .terminal .ln .gl{ color: #4A5575; user-select:none; flex:none; }
+  .terminal .out{ color: #B9E6C9; }
+  .terminal .err{ color: #FF8A78; }
+  .terminal .sys{ color: #6E7CA8; }
+  .terminal .exit-ok{ color: #6FE3A0; }
+  .terminal .exit-bad{ color: #FF8A78; }
+  .terminal .muted{ color: #4A5575; }
+  .cursor{
+    display:inline-block;
+    width: 7px; height: 14px;
+    background: #D9E4F5;
+    margin-left: 2px;
+    animation: blink 1s steps(1) infinite;
+    vertical-align: -2px;
+  }
+  @keyframes blink{ 50%{ opacity: 0; } }
+
+  /* internals */
+  .internals{
+    border-top: 1px solid var(--console-line);
+    background: #0A0E18;
+    max-height: 260px;
+    overflow-y: auto;
+    font-family: var(--font-mono);
+    font-size: 12px;
+  }
+  .internals.hidden{ display:none; }
+  .tabs{
+    display:flex;
+    border-bottom: 1px solid var(--console-line);
+  }
+  .tabs button{
+    background:none; border:none;
+    color: #6E7CA8;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    padding: 9px 13px;
+    border-bottom: 2px solid transparent;
+  }
+  .tabs button.on{ color: #D9E4F5; border-bottom-color: var(--orange); }
+  .tab-body{ padding: 12px 14px; color: #B6C2E0; }
+  .tab-body table{ border-collapse: collapse; width: 100%; }
+  .tab-body td, .tab-body th{
+    text-align: left;
+    padding: 4px 10px 4px 0;
+    border-bottom: 1px solid var(--console-line);
+    color: #B6C2E0;
+    font-size: 11.5px;
+  }
+  .tab-body th{ color: #6E7CA8; font-weight: 500; }
+  .tag-kw{ color: #FF9C7E; }
+  .tag-id{ color: #7EC8FF; }
+  .tag-num{ color: #C6F2A0; }
+  .tag-str{ color: #F2D98A; }
+  .tag-op{ color: #C8A4FF; }
+  pre.asm{ margin:0; white-space: pre-wrap; color:#9FB0D6; }
+  .trace-step{ margin-bottom:8px; padding-left:10px; border-left:2px solid var(--console-line); }
+  .trace-step b{ color:#D9E4F5; }
+
+  /* ---------- Cheatsheet footer ---------- */
+  .cheatsheet{
+    margin-top: 26px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--surface);
+    padding: 18px 20px;
+  }
+  .cheatsheet h2{
+    font-family: var(--font-display);
+    font-size: 14px;
+    letter-spacing: 0.02em;
+    margin: 0 0 14px;
+    color: var(--ink-soft);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 11.5px;
+  }
+  .ref-grid{
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+  }
+  .ref-card{
+    border: 1px solid var(--line-soft);
+    border-radius: 8px;
+    padding: 12px 13px;
+    background: #FCFCFA;
+  }
+  .ref-card .kw{
+    font-family: var(--font-mono);
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--orange);
+    display:block;
+    margin-bottom: 6px;
+  }
+  .ref-card code{
+    display:block;
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--ink-soft);
+    background: var(--surface);
+    border: 1px solid var(--line-soft);
+    border-radius: 5px;
+    padding: 5px 7px;
+    margin-top: 6px;
+  }
+  .ref-card p{
+    margin: 0;
+    font-size: 12px;
+    color: var(--ink-soft);
+    line-height: 1.45;
+  }
+  .ops-row{
+    margin-top: 14px;
+    display:flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .ops-row span.lbl{ font-size: 11.5px; color: var(--ink-faint); font-family: var(--font-mono); }
+  .op-chip{
+    font-family: var(--font-mono);
+    font-size: 12px;
+    background: var(--blue-dim);
+    color: var(--blue);
+    border-radius: 6px;
+    padding: 3px 9px;
+  }
+
+  footer.credit{
+    text-align:center;
+    margin-top: 26px;
+    font-size: 11.5px;
+    color: var(--ink-faint);
+    font-family: var(--font-mono);
+  }
+
+  /* ---------- Responsive ---------- */
+  @media (max-width: 860px){
+    .workspace{ grid-template-columns: 1fr; }
+    .ref-grid{ grid-template-columns: repeat(2, 1fr); }
+    .editor-wrap, .terminal{ min-height: 260px; }
+  }
+  @media (max-width: 480px){
+    .shell{ padding: 14px 14px 40px; }
+    .brand .mark{ font-size: 21px; }
+    .ref-grid{ grid-template-columns: 1fr; }
+    .controls{ width: 100%; }
+    select.examples{ flex:1; }
+    .btn-run{ flex:1; justify-content:center; }
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <header class="topbar">
+    <div class="brand">
+      <span class="mark">SPACE<span>C</span></span>
+      <span class="tagline">a tiny language for planets, docking bays &amp; emit codes</span>
+    </div>
+    <div class="controls">
+      <select class="examples" id="examples">
+        <option value="hello">Example — Hello, Mission Control</option>
+        <option value="math" selected>Example — Variables &amp; arithmetic</option>
+        <option value="ops">Example — All operators</option>
+        <option value="blank">Blank flight plan</option>
+      </select>
+      <button class="btn btn-ghost" id="resetBtn">Reset</button>
+      <button class="btn btn-run" id="runBtn">▶ Launch <span class="key">⌘/Ctrl ⏎</span></button>
+    </div>
+  </header>
+
+  <div class="stepper" id="stepper">
+    <div class="step" data-step="tokenize"><div class="dot"></div><div class="label">TOKENIZE</div></div>
+    <div class="track"></div>
+    <div class="step" data-step="parse"><div class="dot"></div><div class="label">PARSE</div></div>
+    <div class="track"></div>
+    <div class="step" data-step="assemble"><div class="dot"></div><div class="label">ASSEMBLE</div></div>
+    <div class="track"></div>
+    <div class="step" data-step="launch"><div class="dot"></div><div class="label">LAUNCH</div></div>
+  </div>
+
+  <main class="workspace">
+    <section class="panel">
+      <div class="panel-head">
+        <span style="display:flex;align-items:center;gap:8px;">
+          <span class="dots"><span></span><span></span><span></span></span>
+          FLIGHT PLAN · main.bm
+        </span>
+        <span id="lineCount">1 line</span>
+      </div>
+      <div class="editor-wrap">
+        <div class="gutter" id="gutter">1</div>
+        <textarea id="editor" spellcheck="false" autocomplete="off" autocapitalize="off"></textarea>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <span style="display:flex;align-items:center;gap:8px;">
+          <span class="dots"><span></span><span></span><span></span></span>
+          MISSION LOG
+        </span>
+        <button class="pill" id="internalsToggle">internals</button>
+      </div>
+      <div class="terminal" id="terminal"></div>
+      <div class="internals hidden" id="internals">
+        <div class="tabs">
+          <button class="tabbtn on" data-tab="tokens">TOKENS</button>
+          <button class="tabbtn" data-tab="trace">EXEC TRACE</button>
+          <button class="tabbtn" data-tab="asm">ASM PREVIEW</button>
+        </div>
+        <div class="tab-body" id="tabBody"></div>
+      </div>
+    </section>
+  </main>
+
+  <section class="cheatsheet">
+    <h2>Quick reference</h2>
+    <div class="ref-grid">
+      <div class="ref-card">
+        <span class="kw">planet</span>
+        <p>Declares a variable and assigns it the result of an expression or a string.</p>
+        <code>planet fuel = 80 + 5;</code>
+      </div>
+      <div class="ref-card">
+        <span class="kw">dock</span>
+        <p>Prints a single value — a number, a string, or a variable — to the mission log.</p>
+        <code>dock fuel;</code>
+      </div>
+      <div class="ref-card">
+        <span class="kw">emit</span>
+        <p>Ends the program, optionally with an exit code expression.</p>
+        <code>emit 0;</code>
+      </div>
+      <div class="ref-card">
+        <span class="kw">" … "</span>
+        <p>String literals. Only one is read between quotes — no escapes yet.</p>
+        <code>dock "all systems go";</code>
+      </div>
+    </div>
+    <div class="ops-row">
+      <span class="lbl">OPERATORS</span>
+      <span class="op-chip">+</span><span class="op-chip">-</span><span class="op-chip">*</span><span class="op-chip">/</span><span class="op-chip">%</span>
+      <span class="lbl" style="margin-left:8px;">· standard precedence, no parentheses yet</span>
+    </div>
+  </section>
+
+  <footer class="credit">SPACEC playground — tokenizes, parses &amp; runs entirely in your browser. No nasm, no ld, no liftoff hardware required.</footer>
+</div>
+
+<script>
+/* =========================================================
+   SPACEC — tokenizer / parser / interpreter
+   A faithful JS mirror of lexTotoken.h + parser.h, adapted
+   to evaluate directly instead of emitting x86-64 asm.
+   ========================================================= */
+
+const KEYWORDS = { planet: '_PLANET', emit: '_EMIT', dock: '_DOCK' };
+
+function tokenize(code) {
+  const tokens = [];
+  let i = 0;
+  const n = code.length;
+  const isAlpha = c => /[A-Za-z]/.test(c);
+  const isAlnum = c => /[A-Za-z0-9]/.test(c);
+  const isDigit = c => /[0-9]/.test(c);
+  const isSpace = c => /\s/.test(c);
+
+  while (i < n) {
+    const c = code[i];
+
+    if (isAlpha(c)) {
+      let start = i;
+      i++;
+      while (i < n && isAlnum(code[i])) i++;
+      const word = code.slice(start, i);
+      if (KEYWORDS[word]) {
+        tokens.push({ type: KEYWORDS[word], value: null, pos: start });
+      } else {
+        tokens.push({ type: 'IDENT', value: word, pos: start });
+      }
+      continue;
+    }
+
+    if (isDigit(c)) {
+      let start = i;
+      i++;
+      while (i < n && isDigit(code[i])) i++;
+      tokens.push({ type: 'INT_LIT', value: code.slice(start, i), pos: start });
+      continue;
+    }
+
+    if (c === ';') { tokens.push({ type: 'SEMI', value: null, pos: i }); i++; continue; }
+    if (isSpace(c)) { i++; continue; }
+    if (c === '=') { tokens.push({ type: 'EQUALS', value: null, pos: i }); i++; continue; }
+    if ('+-*/%'.includes(c)) { tokens.push({ type: 'OPERATOR', value: c, pos: i }); i++; continue; }
+
+    if (c === '"') {
+      let start = i + 1;
+      i++;
+      while (i < n && code[i] !== '"') i++;
+      tokens.push({ type: 'STRING', value: code.slice(start, i), pos: start });
+      i++; // step past closing quote
+      continue;
+    }
+
+    throw new LexError(`unexpected character '${c}'`, i);
+  }
+  return tokens;
+}
+
+class LexError extends Error { constructor(msg, pos) { super(msg); this.pos = pos; } }
+class ParseError extends Error { constructor(msg, pos) { super(msg); this.pos = pos; } }
+class RuntimeErr extends Error { constructor(msg, pos) { super(msg); this.pos = pos; } }
+
+/* ---- recursive descent, mirrors parse_factor / parse_term / parse_expr ---- */
+
+function parseFactor(tkn, st) {
+  if (st.i < tkn.length) {
+    const t = tkn[st.i];
+    if (t.type === 'INT_LIT') { st.i++; return { type: 'INT_LIT', value: t.value }; }
+    if (t.type === 'IDENT') { st.i++; return { type: 'IDENTIFIER', value: t.value }; }
+    if (t.type === 'STRING') { st.i++; return { type: 'STRING', value: t.value }; }
+  }
+  return null;
+}
+
+function parseTerm(tkn, st) {
+  let left = parseFactor(tkn, st);
+  while (st.i < tkn.length && tkn[st.i].type === 'OPERATOR' &&
+         ['*', '/', '%'].includes(tkn[st.i].value)) {
+    const op = tkn[st.i].value;
+    st.i++;
+    const right = parseFactor(tkn, st);
+    left = { type: 'OPERATOR', value: op, left, right };
+  }
+  return left;
+}
+
+function parseExpr(tkn, st) {
+  let left = parseTerm(tkn, st);
+  while (st.i < tkn.length && tkn[st.i].type === 'OPERATOR' &&
+         ['+', '-'].includes(tkn[st.i].value)) {
+    const op = tkn[st.i].value;
+    st.i++;
+    const right = parseTerm(tkn, st);
+    left = { type: 'OPERATOR', value: op, left, right };
+  }
+  return left;
+}
+
+/* ---- top-level statement loop, mirrors tokeToAssembly ---- */
+
+function parseProgram(tkn) {
+  const st = { i: 0 };
+  const statements = [];
+
+  while (st.i < tkn.length) {
+    const tok = tkn[st.i];
+
+    if (tok.type === '_PLANET') {
+      let name = null;
+      if (st.i + 1 < tkn.length && tkn[st.i + 1].type === 'IDENT') {
+        name = tkn[st.i + 1].value;
+      } else {
+        throw new ParseError('expected an identifier after "planet"', tok.pos);
+      }
+      if (st.i + 2 < tkn.length && tkn[st.i + 2].type === 'EQUALS') {
+        st.i += 3;
+        const expr = parseExpr(tkn, st);
+        if (st.i < tkn.length && tkn[st.i].type === 'SEMI') {
+          statements.push({ kind: 'PLANET', name, expr });
+          st.i++;
+        } else {
+          throw new ParseError(`expected ';' after declaration of "${name}"`, tok.pos);
+        }
+      } else {
+        throw new ParseError(`expected '=' after "planet ${name}"`, tok.pos);
+      }
+      continue;
+    }
+
+    if (tok.type === '_DOCK') {
+      const valTok = tkn[st.i + 1];
+      if (!valTok) throw new ParseError('expected a value after "dock"', tok.pos);
+      let node;
+      if (valTok.type === 'INT_LIT') node = { type: 'INT_LIT', value: valTok.value };
+      else if (valTok.type === 'IDENT') node = { type: 'IDENTIFIER', value: valTok.value };
+      else node = { type: 'STRING', value: valTok.value || '' };
+      statements.push({ kind: 'DOCK', node });
+      st.i += 3; // dock, value, semi
+      continue;
+    }
+
+    if (tok.type === '_EMIT') {
+      st.i++;
+      const expr = parseExpr(tkn, st);
+      if (st.i < tkn.length && tkn[st.i].type === 'SEMI') {
+        statements.push({ kind: 'EMIT', expr });
+        st.i++;
+      } else {
+        throw new ParseError('expected \';\' after "emit"', tok.pos);
+      }
+      continue;
+    }
+
+    // unrecognised token at statement position — skip, mirrors the C "ignore" branch
+    st.i++;
+  }
+
+  return statements;
+}
+
+/* ---- evaluator ---- */
+
+function evalNode(node, vars) {
+  if (!node) throw new RuntimeErr('expected an expression here');
+  switch (node.type) {
+    case 'INT_LIT': return { value: Number(node.value), isString: false };
+    case 'STRING': return { value: node.value, isString: true };
+    case 'IDENTIFIER': {
+      if (!(node.value in vars)) throw new RuntimeErr(`"${node.value}" is not a declared planet`);
+      return vars[node.value];
+    }
+    case 'OPERATOR': {
+      const l = evalNode(node.left, vars);
+      const r = evalNode(node.right, vars);
+      if (l.isString || r.isString) {
+        throw new RuntimeErr(`operator '${node.value}' can't be used on a string`);
+      }
+      let v;
+      switch (node.value) {
+        case '+': v = l.value + r.value; break;
+        case '-': v = l.value - r.value; break;
+        case '*': v = l.value * r.value; break;
+        case '/':
+          if (r.value === 0) throw new RuntimeErr('division by zero');
+          v = Math.trunc(l.value / r.value); break;
+        case '%':
+          if (r.value === 0) throw new RuntimeErr('modulo by zero');
+          v = l.value % r.value; break;
+      }
+      return { value: v, isString: false };
+    }
+    default: throw new RuntimeErr('unknown expression node');
+  }
+}
+
+function runProgram(statements, sink) {
+  const vars = {};
+  const trace = [];
+  let exitCode = null;
+  let halted = false;
+
+  for (const stmt of statements) {
+    if (halted) break;
+    if (stmt.kind === 'PLANET') {
+      const result = evalNode(stmt.expr, vars);
+      vars[stmt.name] = result;
+      trace.push({ text: `planet ${stmt.name} = ${result.isString ? JSON.stringify(result.value) : result.value}`, kind: 'assign' });
+    } else if (stmt.kind === 'DOCK') {
+      const result = evalNode(stmt.node, vars);
+      sink.write(String(result.value));
+      trace.push({ text: `dock → "${result.value}"`, kind: 'dock' });
+    } else if (stmt.kind === 'EMIT') {
+      const result = stmt.expr ? evalNode(stmt.expr, vars) : { value: 0, isString: false };
+      exitCode = result.isString ? 0 : Math.trunc(result.value);
+      trace.push({ text: `emit ${exitCode} — process terminated`, kind: 'emit' });
+      halted = true;
+    }
+  }
+
+  return { vars, trace, exitCode };
+}
+
+/* ---- tiny illustrative asm-preview generator (cosmetic only) ---- */
+
+function asmPreview(statements) {
+  let lines = [];
+  lines.push('; --- illustrative preview only, not executed ---');
+  lines.push('; inspired by toAssemb() in parser.h');
+  lines.push('');
+  lines.push('section .data');
+  let dataIdx = 0;
+  for (const s of statements) {
+    if (s.kind === 'DOCK' && (s.node.type === 'STRING' || s.node.type === 'INT_LIT')) {
+      lines.push(`    msg${dataIdx} db '${String(s.node.value).replace(/'/g, "\\'")}', 10, 0`);
+      dataIdx++;
+    }
+  }
+  lines.push('');
+  lines.push('section .text');
+  lines.push('    global _start');
+  lines.push('_start:');
+  lines.push('    push rbp');
+  lines.push('    mov  rbp, rsp');
+  let msgN = 0;
+  for (const s of statements) {
+    if (s.kind === 'PLANET') {
+      lines.push(`    ; planet ${s.name}`);
+      lines.push(`    ; evaluate expression, push rax`);
+      lines.push(`    push rax        ; store ${s.name} on stack`);
+    } else if (s.kind === 'DOCK') {
+      if (s.node.type === 'IDENTIFIER') {
+        lines.push(`    ; dock ${s.node.value}`);
+        lines.push(`    mov rax, [rbp - N]   ; load ${s.node.value}`);
+        lines.push(`    mov rdi, 1`);
+        lines.push(`    syscall              ; write to stdout`);
+      } else {
+        lines.push(`    ; dock literal`);
+        lines.push(`    mov rsi, msg${msgN}`);
+        lines.push(`    mov rax, 1`);
+        lines.push(`    mov rdi, 1`);
+        lines.push(`    syscall`);
+        msgN++;
+      }
+    } else if (s.kind === 'EMIT') {
+      lines.push(`    ; emit`);
+      lines.push(`    mov rax, 60          ; sys_exit`);
+      lines.push(`    syscall`);
+    }
+  }
+  return lines.join('\n');
+}
+
+/* =========================================================
+   UI wiring
+   ========================================================= */
+
+const editor = document.getElementById('editor');
+const gutter = document.getElementById('gutter');
+const lineCount = document.getElementById('lineCount');
+const terminal = document.getElementById('terminal');
+const runBtn = document.getElementById('runBtn');
+const resetBtn = document.getElementById('resetBtn');
+const examplesSel = document.getElementById('examples');
+const internalsToggle = document.getElementById('internalsToggle');
+const internals = document.getElementById('internals');
+const tabBody = document.getElementById('tabBody');
+const stepperEl = document.getElementById('stepper');
+
+const EXAMPLES = {
+  hello: `dock "Hello from SPACEC, Mission Control!";
+emit 0;`,
+  math: `planet greeting = "Houston, we are go for launch";
+dock greeting;
+
+planet a = 12;
+planet b = 5;
+planet sum = a + b * 2;
+dock sum;
+
+emit 0;`,
+  ops: `planet x = 100;
+planet y = 7;
+
+planet remainder = x % y;
+dock remainder;
+
+planet diff = x - y;
+dock diff;
+
+planet product = x * y;
+dock product;
+
+planet quotient = x / y;
+dock quotient;
+
+emit 0;`,
+  blank: `planet fuel = 0;
+dock fuel;
+emit 0;`
+};
+
+let lastTokens = [];
+let lastTrace = [];
+let lastStatements = [];
+let activeTab = 'tokens';
+
+function setEditorCode(code) {
+  editor.value = code;
+  syncGutter();
+}
+
+function syncGutter() {
+  const lines = editor.value.split('\n');
+  gutter.textContent = lines.map((_, idx) => idx + 1).join('\n');
+  lineCount.textContent = `${lines.length} line${lines.length === 1 ? '' : 's'}`;
+}
+editor.addEventListener('input', syncGutter);
+editor.addEventListener('scroll', () => { gutter.scrollTop = editor.scrollTop; });
+
+examplesSel.addEventListener('change', () => {
+  setEditorCode(EXAMPLES[examplesSel.value] || '');
+});
+
+resetBtn.addEventListener('click', () => {
+  examplesSel.value = 'math';
+  setEditorCode(EXAMPLES.math);
+  clearTerminal();
+  resetStepper();
+});
+
+internalsToggle.addEventListener('click', () => {
+  internals.classList.toggle('hidden');
+  internalsToggle.classList.toggle('on');
+});
+
+internals.addEventListener('click', (e) => {
+  const btn = e.target.closest('.tabbtn');
+  if (!btn) return;
+  document.querySelectorAll('.tabbtn').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  activeTab = btn.dataset.tab;
+  renderTab();
+});
+
+function clearTerminal() {
+  terminal.innerHTML = '';
+}
+
+function termLine(text, cls) {
+  const row = document.createElement('div');
+  row.className = 'ln';
+  const gl = document.createElement('span');
+  gl.className = 'gl';
+  gl.textContent = '›';
+  const body = document.createElement('span');
+  body.className = cls || '';
+  body.textContent = text;
+  row.appendChild(gl);
+  row.appendChild(body);
+  terminal.appendChild(row);
+  terminal.scrollTop = terminal.scrollHeight;
+}
+
+function resetStepper() {
+  document.querySelectorAll('.step').forEach(s => s.classList.remove('active', 'done', 'error'));
+  document.querySelectorAll('.track').forEach(t => t.classList.remove('filled'));
+}
+
+function setStep(name, state) {
+  const el = stepperEl.querySelector(`.step[data-step="${name}"]`);
+  if (!el) return;
+  el.classList.remove('active', 'done', 'error');
+  el.classList.add(state);
+}
+function fillTrackAfter(name) {
+  const el = stepperEl.querySelector(`.step[data-step="${name}"]`);
+  const track = el && el.nextElementSibling;
+  if (track && track.classList.contains('track')) track.classList.add('filled');
+}
+
+const wait = (ms) => new Promise(r => setTimeout(r, ms));
+
+function escType(t) {
+  const map = {
+    _PLANET: 'tag-kw', _EMIT: 'tag-kw', _DOCK: 'tag-kw',
+    IDENT: 'tag-id', INT_LIT: 'tag-num', STRING: 'tag-str', OPERATOR: 'tag-op',
+    EQUALS: 'tag-op', SEMI: 'tag-op'
+  };
+  return map[t] || '';
+}
+
+function renderTab() {
+  if (activeTab === 'tokens') {
+    if (!lastTokens.length) { tabBody.innerHTML = '<span style="color:#4A5575">run the program to see tokens</span>'; return; }
+    let rows = lastTokens.map((t, idx) => `
+      <tr>
+        <td>${idx}</td>
+        <td class="${escType(t.type)}">${t.type}</td>
+        <td>${t.value !== null && t.value !== undefined ? escapeHtml(String(t.value)) : '<span style="color:#4A5575">—</span>'}</td>
+      </tr>`).join('');
+    tabBody.innerHTML = `<table><tr><th>#</th><th>type</th><th>value</th></tr>${rows}</table>`;
+  } else if (activeTab === 'trace') {
+    if (!lastTrace.length) { tabBody.innerHTML = '<span style="color:#4A5575">run the program to see the execution trace</span>'; return; }
+    tabBody.innerHTML = lastTrace.map((t, idx) =>
+      `<div class="trace-step"><b>${idx + 1}.</b> ${escapeHtml(t.text)}</div>`).join('');
+  } else if (activeTab === 'asm') {
+    tabBody.innerHTML = `<pre class="asm">${escapeHtml(asmPreview(lastStatements))}</pre>`;
+  }
+}
+
+function escapeHtml(s) {
+  return s.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+async function launch() {
+  runBtn.disabled = true;
+  clearTerminal();
+  resetStepper();
+  lastTokens = []; lastTrace = []; lastStatements = [];
+  termLine('booting SPACEC toolchain…', 'sys');
+
+  // ---- TOKENIZE ----
+  setStep('tokenize', 'active');
+  await wait(180);
+  let tokens;
+  try {
+    tokens = tokenize(editor.value);
+    lastTokens = tokens;
+  } catch (e) {
+    setStep('tokenize', 'error');
+    termLine(`lex error: ${e.message} (position ${e.pos})`, 'err');
+    runBtn.disabled = false;
+    activeTab = 'tokens'; document.querySelectorAll('.tabbtn').forEach(b=>b.classList.toggle('on', b.dataset.tab==='tokens')); renderTab();
+    return;
+  }
+  setStep('tokenize', 'done');
+  fillTrackAfter('tokenize');
+  termLine(`${tokens.length} tokens read`, 'sys');
+
+  // ---- PARSE ----
+  setStep('parse', 'active');
+  await wait(180);
+  let statements;
+  try {
+    statements = parseProgram(tokens);
+    lastStatements = statements;
+  } catch (e) {
+    setStep('parse', 'error');
+    termLine(`parse error: ${e.message}`, 'err');
+    runBtn.disabled = false;
+    renderTab();
+    return;
+  }
+  setStep('parse', 'done');
+  fillTrackAfter('parse');
+  termLine(`${statements.length} statements parsed`, 'sys');
+
+  // ---- ASSEMBLE (cosmetic) ----
+  setStep('assemble', 'active');
+  await wait(180);
+  setStep('assemble', 'done');
+  fillTrackAfter('assemble');
+  termLine('flight plan assembled', 'sys');
+
+  // ---- LAUNCH ----
+  setStep('launch', 'active');
+  await wait(180);
+
+  const sink = { write: (s) => termLine(s, 'out') };
+  try {
+    const result = runProgram(statements, sink);
+    lastTrace = result.trace;
+    setStep('launch', 'done');
+    if (result.exitCode !== null) {
+      termLine(`process exited with code ${result.exitCode}`, result.exitCode === 0 ? 'exit-ok' : 'exit-bad');
+    } else {
+      termLine('program ended without an emit — no exit code', 'muted');
+    }
+  } catch (e) {
+    setStep('launch', 'error');
+    termLine(`runtime error: ${e.message}`, 'err');
+  }
+
+  runBtn.disabled = false;
+  renderTab();
+}
+
+runBtn.addEventListener('click', launch);
+document.addEventListener('keydown', (e) => {
+  if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') { e.preventDefault(); launch(); }
+});
+
+/* ---- init ---- */
+setEditorCode(EXAMPLES.math);
+termLine('idle — press Launch to tokenize, parse and run your flight plan.', 'muted');
+
+</script>
+</body>
+</html>
